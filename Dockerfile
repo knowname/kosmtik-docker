@@ -1,37 +1,17 @@
-FROM node:12-buster
+FROM node:19-buster
 
-ARG ZIP_URL_BASE
-ARG BRANCH_TAG
-ARG BRANCH_TAG_IN_ZIP
-ARG HOST_USER
-ARG HOT_UID
-ARG HOST_GID
+ENV DEBIAN_FRONTEND noninteractive
+ENV LANG C.UTF-8
 
-USER $HOST_UID:$HOST_GID
+ARG ARCHIVE_URL=https://github.com/kosmtik/kosmtik/archive/6fbf71.tar.gz
 
-COPY run.sh register_fonts_from_hardcoded_directory.patch yaml_safeDump_config_js.patch yaml_safeDump_yaml_js.patch /
+RUN apt-get update -qq \
+    && apt-get install -y --no-install-recommends curl libmapnik-dev
 
-# It is required that the user running Kosmtik owns the files. I don't know why but it seems that
-# it depends on that. Well it's NodeJS.
-# In addition, it is required to change the symbolic name of the user called "node" by the base
-# image to the name used by the user startig the container for PostgreSQL peer authentication to
-# work.
-RUN apt-get update && apt-get install -y wget libmapnik-dev && \
-    mkdir /kosmtik && \
-    cd /kosmtik && \
-    wget --quiet -O - $ZIP_URL_BASE/$BRANCH_TAG.tar.gz | tar -xvz && \
-    cd kosmtik-$BRANCH_TAG_IN_ZIP && \
-    patch src/back/Project.js /register_fonts_from_hardcoded_directory.patch && \
-    patch src/Config.js /yaml_safeDump_config_js.patch && \
-    patch src/plugins/base-exporters/YAML.js /yaml_safeDump_yaml_js.patch && \
-    rm /register_fonts_from_hardcoded_directory.patch && \
-    npm install && \
-#    cd node_modules/kosmtik && ln -s ../ node_modules && cd ../../ && \
-    node index.js plugins --install kosmtik-fetch-remote && \
-    chown -R node:node . && \
-    usermod --login $HOST_USER node && \
-    chmod 755 /run.sh
+USER node
+WORKDIR /kosmtik
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+RUN curl -L $ARCHIVE_URL | tar -xvz --strip-components=1 \
+    && npm install \
+    && node index.js plugins --install kosmtik-fetch-remote
 
-# Start the container
-WORKDIR /kosmtik/kosmtik-$BRANCH_TAG_IN_ZIP
-CMD /run.sh

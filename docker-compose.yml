@@ -1,0 +1,40 @@
+version: '3.5'
+services:
+  db:
+    shm_size: '4g'
+    image: postgis/postgis:12-3.3
+    expose:
+      - 5432
+    volumes:
+      - type: volume
+        source: db
+        target: /var/lib/postgresql/data
+    env_file:
+      - ./db.env
+    restart: unless-stopped
+
+  kosmtik:
+    image: knowname/kosmtik:2022-11-18_6fbf71
+    build:
+      context: ./
+      args:
+        ARCHIVE_URL: https://github.com/kosmtik/kosmtik/archive/6fbf71.tar.gz # master 18.11.2022
+    env_file:
+      - ./db.env
+    ports:
+      - "6789:6789"
+    volumes:
+      - type: bind
+        source: ./project
+        target: /project
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        node index.js serve \
+        --host 0.0.0.0 \
+        --localconfig /project/localconfig.json \
+        /project/style/project.mml
+
+volumes:
+  db:

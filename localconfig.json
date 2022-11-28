@@ -1,0 +1,14 @@
+[
+	{
+		"where": "Layer",
+		"if": {
+			"Datasource.type": "postgis"
+		},
+		"then": {
+			"Datasource.dbname": "gis",
+			"Datasource.password": "wtfpl",
+			"Datasource.user": "postgres",
+			"Datasource.host": "db"
+		}
+	}
+]
