@@ -14,13 +14,14 @@ refer to other guide, e.g. switch2osm.org, for further information.
 Build the Docker image (required only once):
 
 ```sh
-./build_docker.sh
+docker-compose build
 ```
 
-Start Kosmtik:
+Place the map style file in the "style" directory and start Kosmtik.
+The project file to be available under "style/project.mml".
 
 ```
-./start_kosmtik --dir /path/to/style/dir --mml path_to_mml_relative_to_dir_arg.mml
+docker-compose up kosmtik
 ```
 
 ## License
